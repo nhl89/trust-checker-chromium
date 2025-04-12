@@ -1,0 +1,4 @@
+langflow==1.3.2
+playwright
+openai
+beautifulsoup4
