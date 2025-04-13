@@ -1,3 +1,3 @@
-# Trust Checker with Chromium
+# Trustpilot Checker
 
-This Hugging Face Space runs Langflow with Playwright-powered Chromium scraping for JS-rendered trust checks.
+Trustpilot review scraping and trust analysis using Langflow + Chromium + OpenSearch.

@@ -1,4 +1,5 @@
 langflow==1.3.2
-playwright
-openai
+openai==1.13.3
 beautifulsoup4
+playwright
+opensearch-py

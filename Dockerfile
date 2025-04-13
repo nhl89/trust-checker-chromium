@@ -1,23 +1,36 @@
 FROM python:3.10-slim
 
-ENV PIP_NO_CACHE_DIR=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    LANG=C.UTF-8
-
-RUN apt-get update && apt-get install -y \
-    wget curl git unzip gnupg build-essential \
-    libglib2.0-0 libnss3 libgconf-2-4 libfontconfig1 \
-    libxss1 libasound2 libxshmfence1 libatk-bridge2.0-0 \
-    libgtk-3-0 ca-certificates xvfb \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN pip install --upgrade pip && \
-    pip install langflow==1.3.2 playwright openai beautifulsoup4
-
-RUN playwright install --with-deps chromium
-
-EXPOSE 7860
+ENV LANG=C.UTF-8
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
+COPY . /app
 
-CMD ["langflow", "run", "--host", "0.0.0.0", "--port", "7860"]
+RUN apt-get update && apt-get install -y \
+    curl \
+    unzip \
+    ffmpeg \
+    build-essential \
+    libglib2.0-0 \
+    libnss3 \
+    libgconf-2-4 \
+    libxss1 \
+    libasound2 \
+    libxtst6 \
+    libxrandr2 \
+    xdg-utils \
+    wget \
+    libu2f-udev \
+    ca-certificates \
+    fonts-liberation \
+    libappindicator3-1 \
+    lsb-release \
+    libatk-bridge2.0-0 \
+    libgtk-3-0 && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN pip install --upgrade pip && \
+    pip install -r requirements.txt && \
+    playwright install chromium
+

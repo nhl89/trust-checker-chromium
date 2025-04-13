@@ -1,58 +1,39 @@
 from langflow import CustomComponent
-from langflow.schema.message import Message
+from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
-import re
 
 class TrustpilotScraper(CustomComponent):
     display_name = "Trustpilot Scraper"
-    description = "Scrapes reviews from Trustpilot using Playwright."
+    description = "Extract Trustpilot review data from company Trustpilot page."
 
     def build_config(self):
         return {
-            "url_input": {
-                "display_name": "Website URL",
+            "url": {
+                "display_name": "Trustpilot URL",
                 "type": "str",
                 "required": True
             }
         }
 
-    def build(self, url_input: str) -> str:
-        domain = self.extract_domain(url_input)
+    def build(self, url: str, **kwargs) -> str:
+        if not url.startswith("http"):
+            return "[ERROR] Invalid URL"
 
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            page = browser.new_page()
+        try:
+            with sync_playwright() as p:
+                browser = p.chromium.launch(headless=True)
+                page = browser.new_page()
+                page.goto(url, timeout=60000)
+                page.wait_for_selector("section.styles_reviewsOverview__JDbNU", timeout=15000)
 
-            try:
-                page.goto("https://www.trustpilot.com/")
-                page.fill('input[name="query"]', domain)
-                page.keyboard.press("Enter")
-                page.wait_for_timeout(3000)
+                html = page.content()
+                soup = BeautifulSoup(html, "html.parser")
 
-                first_result = page.locator('a[href*="/review/"]').first
-                first_result.click()
+                reviews_section = soup.find("section", class_="styles_reviewsOverview__JDbNU")
+                reviews = reviews_section.get_text(separator="\n", strip=True) if reviews_section else "No reviews found."
 
-                page.wait_for_timeout(3000)
-
-                reviews = page.locator('[data-service-review-text-typography]')
-                stars = page.locator('[data-service-review-rating]')
-                usernames = page.locator('[data-consumer-name-typography]')
-
-                scraped_reviews = []
-                for i in range(min(reviews.count(), 5)):
-                    scraped_reviews.append({
-                        "user": usernames.nth(i).inner_text(),
-                        "stars": stars.nth(i).inner_text(),
-                        "review": reviews.nth(i).inner_text(),
-                    })
-
-                return str(scraped_reviews)
-
-            except Exception as e:
-                return f"[ERROR] Trustpilot scrape failed: {e}"
-            finally:
                 browser.close()
+                return reviews
 
-    def extract_domain(self, url):
-        domain = re.sub(r"https?://(www\.)?", "", url)
-        return domain.split("/")[0]
+        except Exception as e:
+            return f"[ERROR] Failed to extract Trustpilot data: {e}"

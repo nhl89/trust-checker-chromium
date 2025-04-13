@@ -1,6 +1,3 @@
 import os
-from langflow.main import main
 
-if __name__ == "__main__":
-    os.environ["LANGFLOW_SPACE"] = "1"
-    main()
+os.system("langflow run --host 0.0.0.0 --port 7860")
